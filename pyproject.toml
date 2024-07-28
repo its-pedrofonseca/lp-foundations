@@ -19,6 +19,15 @@ pylint = "^2.11.1"
 pytest-cov = "^2.12.1"
 toml = "^0.10.2"
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.2.5",
+    "pylint>=2.11.1",
+    "pytest-cov>=2.12.1",
+    "toml>=0.10.2",
+    "pandas>=2.2.0"
+]
+
 [tool.coverage.run]
 omit = [
     "*/conftest.py", "*/test*", # omit test files
