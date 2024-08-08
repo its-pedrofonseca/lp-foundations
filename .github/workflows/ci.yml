@@ -14,18 +14,22 @@ jobs:
         python-version: ["3.9", "3.10", "3.11"]
     steps:
     - uses: actions/checkout@v3
+
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install Poetry
-      uses: python-poetry/action@v3
+      uses: snok/install-poetry@v1.7.0
       with:
-        poetry-version: 1.8.1  # or the version you want to use
+        version: latest
+
     - name: Install dependencies
       run: |
         poetry install
-    - name: Reformat code with Black, Analyse the code with pytest and pylint
+
+    - name: Reformat code with Black, Analyze the code with pytest and pylint
       run: |
         poetry run black $(git ls-files '*.py')
         poetry run pytest
