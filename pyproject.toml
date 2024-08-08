@@ -1,4 +1,4 @@
-[tool.poetry]
+[project]
 name = "life_expectancy"
 version = "0.1.0"
 readme = "README.md"
