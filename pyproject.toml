@@ -15,6 +15,7 @@ pytest = "^6.2.5"
 pylint = "^2.11.1"
 pytest-cov = "^2.12.1"
 toml = "^0.10.2"
+black = "^23.1.0"
 
 [project.optional-dependencies]
 dev = [
