@@ -1,5 +1,5 @@
 [project]
-authors = ["Pedro Fonseca <pedro.fonseca@daredata.engineering>"]
+authors = [{name = "Pedro Fonseca", email="pedro.fonseca@daredata.engineering"}]
 name = "life_expectancy"
 
 [tool.poetry]
