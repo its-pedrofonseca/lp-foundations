@@ -1,6 +1,7 @@
-import pandas as pd
 import os
 import glob
+import argparse
+import pandas as pd
 
 def list_tsv_files():
     """List TSV files in the given folder."""
@@ -8,14 +9,13 @@ def list_tsv_files():
     current_folder = os.getcwd()
     pattern = os.path.join(current_folder, "life_expectancy/data", "*.tsv")
     tsv_files = glob.glob(pattern)
-    print(tsv_files)
     if not tsv_files:
         raise FileNotFoundError("No TSV files found in the data directory.")
     return tsv_files[0]
 
-def clean_data():
+def clean_data(country = "PT"):
     """
-    
+    This function read input file and applies data transformations to output csv file
     """
 
     # Read data from file
@@ -34,14 +34,25 @@ def clean_data():
     # Remove nan
     df = df.dropna(subset=['value'])
 
-    # Filter data for PT
-    df = df[df['region'] == 'PT']
+    # Filter data for country
+    df = df[df['region'] == country]
 
     # Save the df into CSV file 
-    df.to_csv('life_expectancy/data/pt_life_expectancy.csv', index=False)
+    current_folder = os.getcwd()
+    output_file = f'{current_folder}/life_expectancy/data/{country.lower()}_life_expectancy.csv'
+    df.to_csv(output_file, index=False)
 
     return df
 
 # Run the function
-if __name__ == "__main__":
-    list_tsv_files()
+if __name__ == "__main__": # pragma: no cover
+
+    #init parser
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--country", type=str, default="PT", help="Country code to filter data (default: PT)")
+
+    # Parse the command-line arguments
+    args = parser.parse_args()
+
+    # Pass the country argument clean_data
+    clean_data(country=args.country)
