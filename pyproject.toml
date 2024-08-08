@@ -5,7 +5,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 description = "Foundations Learning Path"
 authors = [
-    {name = "Pedro Fonseca<pedro.fonseca@daredata.engineering>"}
+    name = "Pedro Fonseca<pedro.fonseca@daredata.engineering>"
 ]
 
 [tool.poetry.dependencies]
