@@ -1,3 +1,7 @@
+"""
+This module contains functions for cleaning and processing life expectancy data.
+"""
+
 import os
 import glob
 import argparse
@@ -26,30 +30,30 @@ def clean_data(country = "PT"):
 
     # i) Read data from file
     file = list_tsv_files()
-    df = pd.read_csv(file, sep="\t")
+    data_frame = pd.read_csv(file, sep="\t")
 
-    # ii) Correct df and unpivot data
-    df[['unit', 'sex', 'age', 'region']] = df['unit,sex,age,geo\\time'].str.split(',', expand=True)
-    df = df.drop(columns=['unit,sex,age,geo\\time'])
-    df = pd.melt(df, id_vars=['unit', 'sex', 'age', 'region'], var_name='year', value_name='value')
+    # ii) Correct data_frame and unpivot data
+    data_frame[['unit', 'sex', 'age', 'region']] = data_frame['unit,sex,age,geo\\time'].str.split(',', expand=True)
+    data_frame = data_frame.drop(columns=['unit,sex,age,geo\\time'])
+    data_frame = pd.melt(data_frame, id_vars=['unit', 'sex', 'age', 'region'], var_name='year', value_name='value')
 
     # iii) Cast year to int and value to float
-    df['year'] = df['year'].astype(int)
-    df['value'] = df['value'].apply(clean_values)
-    df['value'] = pd.to_numeric(df['value'].str.replace(':', ''), errors='coerce')
+    data_frame['year'] = data_frame['year'].astype(int)
+    data_frame['value'] = data_frame['value'].apply(clean_values)
+    data_frame['value'] = pd.to_numeric(data_frame['value'].str.replace(':', ''), errors='coerce')
 
     # iv) Remove nan
-    df = df.dropna(subset=['value'])
+    data_frame = data_frame.dropna(subset=['value'])
 
     # v) Filter data for country
-    df = df[df['region'] == country]
+    data_frame = data_frame[data_frame['region'] == country]
 
-    # vi) Save the df into CSV file 
+    # vi) Save the data_frame into CSV file 
     current_folder = os.getcwd()
     output_file = f'{current_folder}/life_expectancy/data/{country.lower()}_life_expectancy.csv'
-    df.to_csv(output_file, index=False)
+    data_frame.to_csv(output_file, index=False)
 
-    return df
+    return data_frame
 
 # Run the function
 if __name__ == "__main__": # pragma: no cover
