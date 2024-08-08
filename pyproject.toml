@@ -1,4 +1,8 @@
 [project]
+authors = ["Pedro Fonseca <pedro.fonseca@daredata.engineering>"]
+name = "life_expectancy"
+
+[tool.poetry]
 name = "life_expectancy"
 version = "0.1.0"
 readme = "README.md"
