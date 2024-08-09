@@ -1,3 +1,9 @@
+"""Tests for the life_expectancy cleaning module.
+
+This module contains unit tests for the functions in the cleaning module,
+specifically testing the clean_data function to ensure it produces the expected output.
+"""
+
 import pandas as pd
 from life_expectancy.cleaning import load_data, clean_data, save_data
 from . import OUTPUT_DIR
