@@ -12,7 +12,7 @@ def return_first_tsv_file():
     """Return the first TSV file in the life_expectancy/data folder."""
 
     current_folder = os.getcwd()
-    pattern = os.path.join(current_folder, "data", "*.tsv")
+    pattern = os.path.join(current_folder, "life_expectancy/data", "*.tsv")
     print(pattern)
     tsv_files = glob.glob(pattern)
     if not tsv_files:
@@ -88,7 +88,7 @@ def save_data(data_frame, country="PT"):
     """
 
     current_folder = os.getcwd()
-    output_file = os.path.join(current_folder, f'data/{country.lower()}_life_expectancy.csv')
+    output_file = os.path.join(current_folder, f'life_expectancy/data/{country.lower()}_life_expectancy.csv')
     try:
         data_frame.to_csv(output_file, index=False)
     except IOError as e:
