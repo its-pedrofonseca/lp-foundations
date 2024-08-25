@@ -9,11 +9,10 @@ import pandas as pd
 
 def return_first_tsv_file():
 
-    """Return the first TSV file in the life_expectancy/data folder."""
+    """List the first TSV file in the life_expectancy/data folder."""
 
     current_folder = os.getcwd()
     pattern = os.path.join(current_folder, "life_expectancy/data", "*.tsv")
-    print(pattern)
     tsv_files = glob.glob(pattern)
     if not tsv_files:
         raise FileNotFoundError("No TSV files found in the data directory.")
@@ -32,10 +31,10 @@ def load_data():
     file = return_first_tsv_file()
     try:
         data_frame = pd.read_csv(file, sep="\t")
-    except pd.errors.EmptyDataError:
-        raise ValueError("The TSV file is empty.")
-    except pd.errors.ParserError:
-        raise ValueError("Error parsing the TSV file.")
+    except pd.errors.EmptyDataError as exc:
+        raise ValueError("The TSV file is empty.") from exc
+    except pd.errors.ParserError as exc:
+        raise ValueError("Error parsing the TSV file.") from exc
     return data_frame
 
 def clean_data(data_frame, country="PT"):
@@ -58,8 +57,8 @@ def clean_data(data_frame, country="PT"):
     # Unpivot data
     try:
         data_frame[['unit', 'sex', 'age', 'region']] = data_frame[required_column].str.split(',', expand=True)
-    except ValueError:
-        raise ValueError("Error splitting the 'unit,sex,age,geo\\time' column. Ensure it has the correct format.")
+    except ValueError as exc:
+        raise ValueError("Error splitting the 'unit,sex,age,geo\\time' column. Ensure it has the correct format.") from exc
     
     data_frame = data_frame.drop(columns=[required_column])
     data_frame = pd.melt(data_frame, id_vars=['unit', 'sex', 'age', 'region'], var_name='year', value_name='value')
@@ -91,8 +90,8 @@ def save_data(data_frame, country="PT"):
     output_file = os.path.join(current_folder, f'life_expectancy/data/{country.lower()}_life_expectancy.csv')
     try:
         data_frame.to_csv(output_file, index=False)
-    except IOError as e:
-        raise IOError(f"Error saving the file '{output_file}': {e}")
+    except IOError as io_exc:
+        raise IOError(f"Error saving the file '{output_file}': {io_exc}") from io_exc
 
 if __name__ == "__main__":  # pragma: no cover
     parser = argparse.ArgumentParser(description="Process and clean life expectancy data.")
@@ -106,5 +105,5 @@ if __name__ == "__main__":  # pragma: no cover
         raw_data = load_data()
         cleaned_data = clean_data(raw_data, country=args.country)
         save_data(cleaned_data, country=args.country)
-    except (FileNotFoundError, ValueError, KeyError, IOError) as e:
-        print(f"An error occurred: {e}")
+    except (FileNotFoundError, ValueError, KeyError, IOError) as exc:
+        print(f"An error occurred: {exc}")
