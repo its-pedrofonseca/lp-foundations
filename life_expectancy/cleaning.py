@@ -7,12 +7,13 @@ import glob
 import argparse
 import pandas as pd
 
-def list_tsv_files():
+def return_first_tsv_file():
 
-    """List the first TSV file in the life_expectancy/data folder."""
+    """Return the first TSV file in the life_expectancy/data folder."""
 
     current_folder = os.getcwd()
-    pattern = os.path.join(current_folder, "life_expectancy/data", "*.tsv")
+    pattern = os.path.join(current_folder, "data", "*.tsv")
+    print(pattern)
     tsv_files = glob.glob(pattern)
     if not tsv_files:
         raise FileNotFoundError("No TSV files found in the data directory.")
@@ -28,27 +29,39 @@ def load_data():
 
     """Load data from the first TSV file found."""
 
-    file = list_tsv_files()
-    data_frame = pd.read_csv(file, sep="\t")
+    file = return_first_tsv_file()
+    try:
+        data_frame = pd.read_csv(file, sep="\t")
+    except pd.errors.EmptyDataError:
+        raise ValueError("The TSV file is empty.")
+    except pd.errors.ParserError:
+        raise ValueError("Error parsing the TSV file.")
     return data_frame
 
 def clean_data(data_frame, country="PT"):
 
     """
-    Clean the data by unpivoting it, filtering country, and applying necesary transformations.
+    Clean the data by unpivoting it, filtering country, and applying necessary transformations.
     
     Args:
         data_frame (pd.DataFrame): The raw data frame to clean.
         country (str): Country code to filter data by (default is 'PT').
 
     Returns:
-        pd.DataFrame: data fra
-        me.
+        pd.DataFrame: Cleaned data frame.
     """
 
+    required_column = 'unit,sex,age,geo\\time'
+    if required_column not in data_frame.columns:
+        raise KeyError(f"Expected column '{required_column}' not found in the data frame.")
+
     # Unpivot data
-    data_frame[['unit', 'sex', 'age', 'region']] = data_frame['unit,sex,age,geo\\time'].str.split(',', expand=True)
-    data_frame = data_frame.drop(columns=['unit,sex,age,geo\\time'])
+    try:
+        data_frame[['unit', 'sex', 'age', 'region']] = data_frame[required_column].str.split(',', expand=True)
+    except ValueError:
+        raise ValueError("Error splitting the 'unit,sex,age,geo\\time' column. Ensure it has the correct format.")
+    
+    data_frame = data_frame.drop(columns=[required_column])
     data_frame = pd.melt(data_frame, id_vars=['unit', 'sex', 'age', 'region'], var_name='year', value_name='value')
 
     # Clean and convert data types
@@ -58,6 +71,8 @@ def clean_data(data_frame, country="PT"):
 
     # Remove NaN values and filter by country
     data_frame = data_frame.dropna(subset=['value'])
+    if 'region' not in data_frame.columns:
+        raise KeyError("Expected column 'region' not found in the cleaned data frame.")
     data_frame = data_frame[data_frame['region'] == country]
 
     return data_frame
@@ -73,8 +88,11 @@ def save_data(data_frame, country="PT"):
     """
 
     current_folder = os.getcwd()
-    output_file = f'{current_folder}/life_expectancy/data/{country.lower()}_life_expectancy.csv'
-    data_frame.to_csv(output_file, index=False)
+    output_file = os.path.join(current_folder, f'data/{country.lower()}_life_expectancy.csv')
+    try:
+        data_frame.to_csv(output_file, index=False)
+    except IOError as e:
+        raise IOError(f"Error saving the file '{output_file}': {e}")
 
 if __name__ == "__main__":  # pragma: no cover
     parser = argparse.ArgumentParser(description="Process and clean life expectancy data.")
@@ -84,6 +102,9 @@ if __name__ == "__main__":  # pragma: no cover
     args = parser.parse_args()
 
     # Load, clean, and save data functions being called
-    raw_data = load_data()
-    cleaned_data = clean_data(raw_data, country=args.country)
-    save_data(cleaned_data, country=args.country)
+    try:
+        raw_data = load_data()
+        cleaned_data = clean_data(raw_data, country=args.country)
+        save_data(cleaned_data, country=args.country)
+    except (FileNotFoundError, ValueError, KeyError, IOError) as e:
+        print(f"An error occurred: {e}")
