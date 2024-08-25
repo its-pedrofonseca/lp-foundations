@@ -8,9 +8,7 @@ import argparse
 import pandas as pd
 
 def return_first_tsv_file():
-
     """List the first TSV file in the life_expectancy/data folder."""
-
     current_folder = os.getcwd()
     pattern = os.path.join(current_folder, "life_expectancy/data", "*.tsv")
     tsv_files = glob.glob(pattern)
@@ -19,26 +17,21 @@ def return_first_tsv_file():
     return tsv_files[0]
 
 def clean_values(value):
-
     """Removes all non-numeric and non-decimal characters from a string."""
-
     return ''.join(c for c in value if c.isdigit() or c == '.') if isinstance(value, str) else value
 
 def load_data():
-
     """Load data from the first TSV file found."""
-
     file = return_first_tsv_file()
     try:
         data_frame = pd.read_csv(file, sep="\t")
-    except pd.errors.EmptyDataError as exc:
-        raise ValueError("The TSV file is empty.") from exc
-    except pd.errors.ParserError as exc:
-        raise ValueError("Error parsing the TSV file.") from exc
+    except pd.errors.EmptyDataError as read_exc:
+        raise ValueError("The TSV file is empty.") from read_exc
+    except pd.errors.ParserError as parse_exc:
+        raise ValueError("Error parsing the TSV file.") from parse_exc
     return data_frame
 
 def clean_data(data_frame, country="PT"):
-
     """
     Clean the data by unpivoting it, filtering country, and applying necessary transformations.
     
@@ -49,7 +42,6 @@ def clean_data(data_frame, country="PT"):
     Returns:
         pd.DataFrame: Cleaned data frame.
     """
-
     required_column = 'unit,sex,age,geo\\time'
     if required_column not in data_frame.columns:
         raise KeyError(f"Expected column '{required_column}' not found in the data frame.")
@@ -57,8 +49,8 @@ def clean_data(data_frame, country="PT"):
     # Unpivot data
     try:
         data_frame[['unit', 'sex', 'age', 'region']] = data_frame[required_column].str.split(',', expand=True)
-    except ValueError as exc:
-        raise ValueError("Error splitting the 'unit,sex,age,geo\\time' column. Ensure it has the correct format.") from exc
+    except ValueError as split_exc:
+        raise ValueError("Error splitting the 'unit,sex,age,geo\\time' column. Ensure it has the correct format.") from split_exc
     
     data_frame = data_frame.drop(columns=[required_column])
     data_frame = pd.melt(data_frame, id_vars=['unit', 'sex', 'age', 'region'], var_name='year', value_name='value')
@@ -77,7 +69,6 @@ def clean_data(data_frame, country="PT"):
     return data_frame
 
 def save_data(data_frame, country="PT"):
-    
     """
     Save the cleaned data to a CSV file.
     
@@ -85,13 +76,12 @@ def save_data(data_frame, country="PT"):
         data_frame (pd.DataFrame): The cleaned data frame to save.
         country (str): Country code used for naming the output file (default is 'PT').
     """
-
     current_folder = os.getcwd()
     output_file = os.path.join(current_folder, f'life_expectancy/data/{country.lower()}_life_expectancy.csv')
     try:
         data_frame.to_csv(output_file, index=False)
-    except IOError as io_exc:
-        raise IOError(f"Error saving the file '{output_file}': {io_exc}") from io_exc
+    except IOError as write_exc:
+        raise IOError(f"Error saving the file '{output_file}': {write_exc}") from write_exc
 
 if __name__ == "__main__":  # pragma: no cover
     parser = argparse.ArgumentParser(description="Process and clean life expectancy data.")
