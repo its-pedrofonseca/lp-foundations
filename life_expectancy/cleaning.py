@@ -1,5 +1,5 @@
 """
-This module contains functions for cleaning and processing life expectancy data.
+This module contains functions for loading, cleaning, and saving life expectancy data.
 """
 
 import os
@@ -7,9 +7,8 @@ import glob
 import argparse
 import pandas as pd
 
-def list_tsv_files():
-    """List TSV files in the given folder."""
-
+def return_first_tsv_file():
+    """List the first TSV file in the life_expectancy/data folder."""
     current_folder = os.getcwd()
     pattern = os.path.join(current_folder, "life_expectancy/data", "*.tsv")
     tsv_files = glob.glob(pattern)
@@ -17,53 +16,84 @@ def list_tsv_files():
         raise FileNotFoundError("No TSV files found in the data directory.")
     return tsv_files[0]
 
-
 def clean_values(value):
     """Removes all non-numeric and non-decimal characters from a string."""
     return ''.join(c for c in value if c.isdigit() or c == '.') if isinstance(value, str) else value
 
+def load_data():
+    """Load data from the first TSV file found."""
+    file = return_first_tsv_file()
+    try:
+        data_frame = pd.read_csv(file, sep="\t")
+    except pd.errors.EmptyDataError as read_exc:
+        raise ValueError("The TSV file is empty.") from read_exc
+    except pd.errors.ParserError as parse_exc:
+        raise ValueError("Error parsing the TSV file.") from parse_exc
+    return data_frame
 
-def clean_data(country = "PT"):
+def clean_data(data_frame, country="PT"):
     """
-    This function read input file and applies data transformations to output csv file
+    Clean the data by unpivoting it, filtering country, and applying necessary transformations.
+    
+    Args:
+        data_frame (pd.DataFrame): The raw data frame to clean.
+        country (str): Country code to filter data by (default is 'PT').
+
+    Returns:
+        pd.DataFrame: Cleaned data frame.
     """
+    required_column = 'unit,sex,age,geo\\time'
+    if required_column not in data_frame.columns:
+        raise KeyError(f"Expected column '{required_column}' not found in the data frame.")
 
-    # i) Read data from file
-    file = list_tsv_files()
-    data_frame = pd.read_csv(file, sep="\t")
-
-    # ii) Correct data_frame and unpivot data
-    data_frame[['unit', 'sex', 'age', 'region']] = data_frame['unit,sex,age,geo\\time'].str.split(',', expand=True)
-    data_frame = data_frame.drop(columns=['unit,sex,age,geo\\time'])
+    # Unpivot data
+    try:
+        data_frame[['unit', 'sex', 'age', 'region']] = data_frame[required_column].str.split(',', expand=True)
+    except ValueError as split_exc:
+        raise ValueError("Error splitting the 'unit,sex,age,geo\\time' column. Ensure it has the correct format.") from split_exc
+    
+    data_frame = data_frame.drop(columns=[required_column])
     data_frame = pd.melt(data_frame, id_vars=['unit', 'sex', 'age', 'region'], var_name='year', value_name='value')
 
-    # iii) Cast year to int and value to float
+    # Clean and convert data types
     data_frame['year'] = data_frame['year'].astype(int)
     data_frame['value'] = data_frame['value'].apply(clean_values)
-    data_frame['value'] = pd.to_numeric(data_frame['value'].str.replace(':', ''), errors='coerce')
+    data_frame['value'] = pd.to_numeric(data_frame['value'], errors='coerce')
 
-    # iv) Remove nan
+    # Remove NaN values and filter by country
     data_frame = data_frame.dropna(subset=['value'])
-
-    # v) Filter data for country
+    if 'region' not in data_frame.columns:
+        raise KeyError("Expected column 'region' not found in the cleaned data frame.")
     data_frame = data_frame[data_frame['region'] == country]
-
-    # vi) Save the data_frame into CSV file 
-    current_folder = os.getcwd()
-    output_file = f'{current_folder}/life_expectancy/data/{country.lower()}_life_expectancy.csv'
-    data_frame.to_csv(output_file, index=False)
 
     return data_frame
 
-# Run the function
-if __name__ == "__main__": # pragma: no cover
+def save_data(data_frame, country="PT"):
+    """
+    Save the cleaned data to a CSV file.
+    
+    Args:
+        data_frame (pd.DataFrame): The cleaned data frame to save.
+        country (str): Country code used for naming the output file (default is 'PT').
+    """
+    current_folder = os.getcwd()
+    output_file = os.path.join(current_folder, f'life_expectancy/data/{country.lower()}_life_expectancy.csv')
+    try:
+        data_frame.to_csv(output_file, index=False)
+    except IOError as write_exc:
+        raise IOError(f"Error saving the file '{output_file}': {write_exc}") from write_exc
 
-    #init parser
-    parser = argparse.ArgumentParser()
+if __name__ == "__main__":  # pragma: no cover
+    parser = argparse.ArgumentParser(description="Process and clean life expectancy data.")
     parser.add_argument("--country", type=str, default="PT", help="Country code to filter data (default: PT)")
 
     # Parse the command-line arguments
     args = parser.parse_args()
 
-    # Pass the country argument clean_data
-    clean_data(country=args.country)
+    # Load, clean, and save data functions being called
+    try:
+        raw_data = load_data()
+        cleaned_data = clean_data(raw_data, country=args.country)
+        save_data(cleaned_data, country=args.country)
+    except (FileNotFoundError, ValueError, KeyError, IOError) as exc:
+        print(f"An error occurred: {exc}")
