@@ -1,3 +1,7 @@
+"""
+Functions to clean data
+"""
+
 from pathlib import Path
 from typing import List, Dict
 import pandas as pd
