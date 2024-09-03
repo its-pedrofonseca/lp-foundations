@@ -1,9 +1,12 @@
-"""Tests for the cleaning module"""
+"""Tests for the life_expectancy cleaning module.
+
+This module contains unit tests for the functions in the cleaning module,
+specifically testing the clean_data function to ensure it produces the expected output.
+"""
+
 import pandas as pd
-
-from life_expectancy.cleaning import clean_data
+from life_expectancy.cleaning import load_data, clean_data, save_data
 from . import OUTPUT_DIR
-
 
 def test_clean_data(pt_life_expectancy_expected, eu_life_expectancy_expected):
     """Run unit test of function `clean_data`"""
