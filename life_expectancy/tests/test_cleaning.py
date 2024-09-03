@@ -2,8 +2,6 @@
 import pandas as pd
 
 from life_expectancy.cleaning import clean_data
-from . import OUTPUT_DIR
-
 
 def test_clean_data(pt_life_expectancy_expected, eu_life_expectancy_expected):
     """Run unit test of function `clean_data`"""
