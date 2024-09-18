@@ -1,99 +1,44 @@
 """
-This module contains functions for loading, cleaning, and saving life expectancy data.
+Functions to clean data
 """
 
-import os
-import glob
-import argparse
+from pathlib import Path
+from typing import List, Dict
 import pandas as pd
 
-def return_first_tsv_file():
-    """List the first TSV file in the life_expectancy/data folder."""
-    current_folder = os.getcwd()
-    pattern = os.path.join(current_folder, "life_expectancy/data", "*.tsv")
-    tsv_files = glob.glob(pattern)
-    if not tsv_files:
-        raise FileNotFoundError("No TSV files found in the data directory.")
-    return tsv_files[0]
+DIR_PATH = Path(__file__).parent
 
-def clean_values(value):
-    """Removes all non-numeric and non-decimal characters from a string."""
-    return ''.join(c for c in value if c.isdigit() or c == '.') if isinstance(value, str) else value
 
-def load_data():
-    """Load data from the first TSV file found."""
-    file = return_first_tsv_file()
-    try:
-        data_frame = pd.read_csv(file, sep="\t")
-    except pd.errors.EmptyDataError as read_exc:
-        raise ValueError("The TSV file is empty.") from read_exc
-    except pd.errors.ParserError as parse_exc:
-        raise ValueError("Error parsing the TSV file.") from parse_exc
-    return data_frame
+def _apply_unpivot(data_frame: pd.DataFrame) -> pd.DataFrame:
+    """Return Dataframe with the unpivots dates and desired columns"""
+    id_vars = data_frame.columns[0]
+    col_names = ["unit", "sex", "age", "region", "year", "value"]
+    unpivot_df = pd.melt(frame=data_frame, id_vars=id_vars)
+    unpivot_df[id_vars.split(",")] = unpivot_df[id_vars].str.split(",", expand=True)
+    unpivot_df[col_names] = pd.concat(
+        [unpivot_df[id_vars.split(",")], unpivot_df[["variable", "value"]]], axis=1
+    )
+    return unpivot_df[col_names]
 
-def clean_data(data_frame, country="PT"):
-    """
-    Clean the data by unpivoting it, filtering country, and applying necessary transformations.
-    
-    Args:
-        data_frame (pd.DataFrame): The raw data frame to clean.
-        country (str): Country code to filter data by (default is 'PT').
 
-    Returns:
-        pd.DataFrame: Cleaned data frame.
-    """
-    required_column = 'unit,sex,age,geo\\time'
-    if required_column not in data_frame.columns:
-        raise KeyError(f"Expected column '{required_column}' not found in the data frame.")
+def _apply_data_types(data_frame: pd.DataFrame) -> pd.DataFrame:
+    """Ensure data types defined by type_rules, Clean and Extract data using Regex
+    Remove NaNs for requested cols"""
+    types_rules: Dict[str, object] = {"year": int, "value": float}
+    cols_to_delete: List[str] = ["value"]
+    for column, data_type in types_rules.items():
+        data_frame[column] = pd.to_numeric(
+            data_frame[column]
+            .str.extractall(r"(\d+.\d+)")
+            .astype(data_type)
+            .unstack()
+            .max(axis=1),
+            errors="coerce",
+        )
+    return data_frame.dropna(subset=cols_to_delete)
 
-    # Unpivot data
-    try:
-        data_frame[['unit', 'sex', 'age', 'region']] = data_frame[required_column].str.split(',', expand=True)
-    except ValueError as split_exc:
-        raise ValueError("Error splitting the 'unit,sex,age,geo\\time' column. Ensure it has the correct format.") from split_exc
-    
-    data_frame = data_frame.drop(columns=[required_column])
-    data_frame = pd.melt(data_frame, id_vars=['unit', 'sex', 'age', 'region'], var_name='year', value_name='value')
 
-    # Clean and convert data types
-    data_frame['year'] = data_frame['year'].astype(int)
-    data_frame['value'] = data_frame['value'].apply(clean_values)
-    data_frame['value'] = pd.to_numeric(data_frame['value'], errors='coerce')
-
-    # Remove NaN values and filter by country
-    data_frame = data_frame.dropna(subset=['value'])
-    if 'region' not in data_frame.columns:
-        raise KeyError("Expected column 'region' not found in the cleaned data frame.")
-    data_frame = data_frame[data_frame['region'] == country]
-
-    return data_frame
-
-def save_data(data_frame, country="PT"):
-    """
-    Save the cleaned data to a CSV file.
-    
-    Args:
-        data_frame (pd.DataFrame): The cleaned data frame to save.
-        country (str): Country code used for naming the output file (default is 'PT').
-    """
-    current_folder = os.getcwd()
-    output_file = os.path.join(current_folder, f'life_expectancy/data/{country.lower()}_life_expectancy.csv')
-    try:
-        data_frame.to_csv(output_file, index=False)
-    except IOError as write_exc:
-        raise IOError(f"Error saving the file '{output_file}': {write_exc}") from write_exc
-
-if __name__ == "__main__":  # pragma: no cover
-    parser = argparse.ArgumentParser(description="Process and clean life expectancy data.")
-    parser.add_argument("--country", type=str, default="PT", help="Country code to filter data (default: PT)")
-
-    # Parse the command-line arguments
-    args = parser.parse_args()
-
-    # Load, clean, and save data functions being called
-    try:
-        raw_data = load_data()
-        cleaned_data = clean_data(raw_data, country=args.country)
-        save_data(cleaned_data, country=args.country)
-    except (FileNotFoundError, ValueError, KeyError, IOError) as exc:
-        print(f"An error occurred: {exc}")
+def clean_data(data_frame: pd.DataFrame, country: str = "PT") -> pd.DataFrame:
+    """Main function to Clean Data and Filter Region"""
+    clean_df = data_frame.pipe(_apply_unpivot).pipe(_apply_data_types)
+    return clean_df[clean_df.region.str.upper() == country.upper()]
