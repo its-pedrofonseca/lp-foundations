@@ -1,3 +1,5 @@
+"""Tests for the Region enum class."""
+
 import unittest
 from life_expectancy.regions import Region, NON_COUNTRIES
 
