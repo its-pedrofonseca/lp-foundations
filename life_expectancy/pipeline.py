@@ -1,21 +1,20 @@
-
 """Python 3.11.2"""
 
 import argparse
 from life_expectancy.data import load_data, save_data
 from life_expectancy.cleaning import clean_data
-from life_expectancy.regions import Region 
+from life_expectancy.regions import Region
 
 
-def main(*args, **kwargs) -> None:
+def main(**kwargs) -> None:
     """Main Function which call functions of the data pipeline"""
-    raw_df = load_data(kwargs.get('file_name', 'data/eu_life_expectancy_raw.tsv'))
-    regions_input = kwargs.get('regions', 'PT')
+    raw_df = load_data(kwargs.get("file_name", "data/eu_life_expectancy_raw.tsv"))
+    regions_input = kwargs.get("regions", "PT")
     regions_list = []
 
-    for region_str in regions_input.split(','):
+    for region_str in regions_input.split(","):
         region_str = region_str.strip().upper()
-        if region_str in Region._value2member_map_:
+        if region_str in [region.value for region in Region]:
             region = Region(region_str)
             regions_list.append(region)
         else:
@@ -28,11 +27,12 @@ def main(*args, **kwargs) -> None:
         cleaned_dataframes.append(clean_df)
     if len(cleaned_dataframes) == 1:
         return cleaned_dataframes[0]
-    elif len(cleaned_dataframes) > 1:
-        return {region.value: df for region, df in zip(regions_list, cleaned_dataframes)}
-    else:
-        return None
-
+    if len(cleaned_dataframes) > 1:
+        return {
+            region.value: df
+            for region, df in zip(regions_list, cleaned_dataframes)
+        }
+    return None
 
 
 if __name__ == "__main__":  # pragma: no cover
@@ -40,13 +40,19 @@ if __name__ == "__main__":  # pragma: no cover
     parser.add_argument(
         "-R",
         "--regions",
-        help=f"Choose the region you want to filter from here: {[region.value for region in Region]}",
+        help=(
+            "Choose the region you want to filter from here: "
+            f"{[region.value for region in Region]}"
+        ),
         default="PT",
     )
     parser.add_argument(
         "-fn",
         "--file_name",
-        help="Specify data file name. Example: pipeline.py -fn data/eu_life_expectancy_raw.tsv",
+        help=(
+            "Specify data file name. "
+            "Example: pipeline.py -fn data/eu_life_expectancy_raw.tsv"
+        ),
         default="data/eu_life_expectancy_raw.tsv",
     )
     arguments = parser.parse_args()

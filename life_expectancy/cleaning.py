@@ -39,7 +39,9 @@ def _apply_data_types(data_frame: pd.DataFrame) -> pd.DataFrame:
     return data_frame.dropna(subset=cols_to_delete)
 
 
-def clean_data(data_frame: pd.DataFrame, region: Region = Region.PT) -> pd.DataFrame:
+def clean_data(
+    data_frame: pd.DataFrame, region: Region = Region.PT
+) -> pd.DataFrame:
     """Main function to clean data and filter region"""
     clean_df = data_frame.pipe(_apply_unpivot).pipe(_apply_data_types)
     return clean_df[clean_df.region.str.upper() == region.value]
