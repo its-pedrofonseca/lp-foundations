@@ -21,9 +21,17 @@ def main(*args, **kwargs) -> None:
         else:
             print(f"Warning, this '{region_str}' is not a valid region")
 
+    cleaned_dataframes = []
     for region in regions_list:
         clean_df = clean_data(raw_df, region)
         save_data(clean_df, region.value)
+        cleaned_dataframes.append(clean_df)
+    if len(cleaned_dataframes) == 1:
+        return cleaned_dataframes[0]
+    elif len(cleaned_dataframes) > 1:
+        return {region.value: df for region, df in zip(regions_list, cleaned_dataframes)}
+    else:
+        return None
 
 
 
