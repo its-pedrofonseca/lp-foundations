@@ -8,7 +8,8 @@ from life_expectancy.regions import Region
 
 def main(**kwargs) -> None:
     """Main Function which call functions of the data pipeline"""
-    raw_df = load_data(kwargs.get("file_name", "data/eu_life_expectancy_raw.tsv"))
+    file_name = kwargs.get("file_name", "data/eu_life_expectancy_raw.tsv")
+    raw_df = load_data(file_name)
     regions_input = kwargs.get("regions", "PT")
     regions_list = []
 
