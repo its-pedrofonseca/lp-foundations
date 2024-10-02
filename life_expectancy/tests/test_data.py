@@ -1,18 +1,20 @@
 """Tests for the pipeline module"""
-import pandas as pd
+
 from unittest.mock import patch
+
+import pandas as pd
 import pytest
-from pathlib import Path
 
 from life_expectancy.data import (
-    load_data,
-    save_data,
     TSVDataLoader,
     JSONDataLoader,
     ZIPDataLoader,
     get_data_loader,
+    load_data,
+    save_data,
 )
-from . import OUTPUT_DIR, FIXTURES_DIR
+from . import FIXTURES_DIR, OUTPUT_DIR
+
 
 def test_load_data_tsv(eu_life_expectancy_expected):
     """Test loading data from a TSV file using load_data function."""
@@ -20,17 +22,20 @@ def test_load_data_tsv(eu_life_expectancy_expected):
     expected_data = eu_life_expectancy_expected
     pd.testing.assert_frame_equal(actual_data, expected_data)
 
+
 def test_load_data_json(json_life_expectancy_expected):
     """Test loading data from a JSON file using load_data function."""
     actual_data = load_data(FIXTURES_DIR / "eu_life_expectancy_raw_fixture.json")
     expected_data = json_life_expectancy_expected
     pd.testing.assert_frame_equal(actual_data, expected_data)
 
+
 def test_load_data_zip(zip_life_expectancy_expected):
     """Test loading data from a ZIP file using load_data function."""
     actual_data = load_data(FIXTURES_DIR / "eu_life_expectancy_raw_fixture.zip")
     expected_data = zip_life_expectancy_expected
     pd.testing.assert_frame_equal(actual_data, expected_data)
+
 
 def test_tsv_data_loader(eu_life_expectancy_expected):
     """Test loading data using the TSVDataLoader."""
@@ -39,6 +44,7 @@ def test_tsv_data_loader(eu_life_expectancy_expected):
     expected_data = eu_life_expectancy_expected
     pd.testing.assert_frame_equal(actual_data, expected_data)
 
+
 def test_json_data_loader(json_life_expectancy_expected):
     """Test loading data using the JSONDataLoader."""
     loader = JSONDataLoader()
@@ -46,12 +52,14 @@ def test_json_data_loader(json_life_expectancy_expected):
     expected_data = json_life_expectancy_expected
     pd.testing.assert_frame_equal(actual_data, expected_data)
 
+
 def test_zip_data_loader(zip_life_expectancy_expected):
     """Test loading data using the ZIPDataLoader."""
     loader = ZIPDataLoader()
     actual_data = loader.load_data(FIXTURES_DIR / "eu_life_expectancy_raw_fixture.zip")
     expected_data = zip_life_expectancy_expected
     pd.testing.assert_frame_equal(actual_data, expected_data)
+
 
 def test_get_data_loader():
     """Test the get_data_loader factory function."""
@@ -63,6 +71,7 @@ def test_get_data_loader():
     assert isinstance(loader, ZIPDataLoader)
     with pytest.raises(ValueError):
         get_data_loader("data/file.unsupported")
+
 
 def test_save_data(pt_life_expectancy_expected):
     """Test saving data using the save_data function."""

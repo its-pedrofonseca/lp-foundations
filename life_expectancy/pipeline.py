@@ -58,3 +58,4 @@ if __name__ == "__main__":  # pragma: no cover
     )
     arguments = parser.parse_args()
     main(**vars(arguments))
+    

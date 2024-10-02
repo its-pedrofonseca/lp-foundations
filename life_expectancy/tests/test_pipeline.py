@@ -1,17 +1,48 @@
-"""Tests for the pipeline module"""
-from unittest.mock import patch
+"""Tests for the pipeline module."""
+
 import pandas as pd
+
 from life_expectancy.pipeline import main
-from . import FIXTURES_DIR
+from . import FIXTURES_DIR, OUTPUT_DIR
 
 
-@patch("life_expectancy.pipeline.save_data")
-def test_main(mock, pt_life_expectancy_expected):
-    """Run the `main` function and compare the output to the expected output"""
-    mock.side_effect = print("Mocking save data")
-    actual_data = main(
-        file_name=f"{FIXTURES_DIR}/eu_life_expectancy_raw_fixture.tsv", regions="PT"
-    ).reset_index(drop=True)
-    expected_data = pt_life_expectancy_expected.reset_index(drop=True)
-    pd.testing.assert_frame_equal(actual_data, expected_data)
-    
+def test_pipeline_for_tsv():
+    """Test the pipeline with a TSV input file."""
+    # Set up the arguments
+    args = {
+        "file_name": FIXTURES_DIR / "eu_life_expectancy_raw_fixture.tsv",
+        "regions": "PT",
+    }
+
+    # Run the pipeline
+    main(**args)
+
+    # Load expected output
+    expected_output = pd.read_csv(FIXTURES_DIR / "pt_life_expectancy_expected.csv")
+
+    # Load actual output
+    actual_output = pd.read_csv(OUTPUT_DIR / "pt_life_expectancy.csv")
+
+    # Compare
+    pd.testing.assert_frame_equal(actual_output, expected_output)
+
+
+def test_pipeline_for_zip():
+    """Test the pipeline with a ZIP input file."""
+    # Set up the arguments
+    args = {
+        "file_name": FIXTURES_DIR / "eu_life_expectancy_raw_fixture.zip",
+        "regions": "PT",
+    }
+
+    # Run the pipeline
+    main(**args)
+
+    # Load expected output
+    expected_output = pd.read_csv(FIXTURES_DIR / "pt_life_expectancy_expected.csv")
+
+    # Load actual output
+    actual_output = pd.read_csv(OUTPUT_DIR / "pt_life_expectancy.csv")
+
+    # Compare
+    pd.testing.assert_frame_equal(actual_output, expected_output)
